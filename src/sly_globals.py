@@ -49,6 +49,7 @@ ann_prefix = 'tomatOD_'
 ann_ext = '.json'
 batch_size = 30
 class_name = 'tomato'
+train_ds = 'Train'
 
 obj_class = sly.ObjClass(class_name, sly.Rectangle)
 obj_class_collection = sly.ObjClassCollection([obj_class])

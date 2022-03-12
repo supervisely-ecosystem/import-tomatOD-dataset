@@ -25,7 +25,7 @@ def prepare_ann_data(ann_path):
         g.category_id_to_name[category['id']] = category['name']
 
 
-def create_ann(img_name):
+def create_ann(img_name, ds_name):
     labels = []
 
     im_id = g.image_name_to_id[img_name]
@@ -36,7 +36,10 @@ def create_ann(img_name):
     for idx, bbox in enumerate(bbox_anns):
         rectangle = sly.Rectangle(bbox[1], bbox[0], bbox[1] + bbox[3], bbox[0] + bbox[2])
 
-        tag_name = g.category_id_to_name[tag_ids[idx]]
+        if ds_name == g.train_ds:
+            tag_name = g.category_id_to_name[tag_ids[idx]]
+        else:                                                  # test_ann diff from train_ann in tags data
+            tag_name = g.category_id_to_name[1][tag_ids[idx]-1]
         tag = sly.Tag(g.meta.get_tag_meta(tag_name))
 
         label = sly.Label(rectangle, g.obj_class, tags=sly.TagCollection([tag]))
@@ -63,7 +66,6 @@ def import_tomatoOD(api: sly.Api, task_id, context, state, app_logger):
     gdown.download(g.annotations_url, g.annotations_archive_path, quiet=False)
     extract_zip(g.annotations_archive_path)
 
-
     anns_path = os.path.join(g.work_dir_path, g.anns_folder)
 
     new_project = api.project.create(g.WORKSPACE_ID, g.project_name, change_name_if_conflict=True)
@@ -86,7 +88,7 @@ def import_tomatoOD(api: sly.Api, task_id, context, state, app_logger):
             img_infos = api.image.upload_paths(new_dataset.id, img_batch, img_pathes)
             img_ids = [im_info.id for im_info in img_infos]
 
-            anns = [create_ann(img_name) for img_name in img_batch]
+            anns = [create_ann(img_name, ds) for img_name in img_batch]
             api.annotation.upload_anns(img_ids, anns)
 
             progress.iters_done_report(len(img_batch))
